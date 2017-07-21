@@ -27,7 +27,7 @@ func NewClient(baseURL string) (*Client, error) {
 	return client, nil
 }
 
-func (c *Client) request(method, path string, content io.Reader) ([]byte, error) {
+func (c *Client) request(method, path string, content io.Reader, headers map[string]string) ([]byte, error) {
 	fullPath := fmt.Sprintf("%s%s", c.baseURL, path)
 	url, err := c.buildURL(fullPath)
 	if err != nil {
@@ -40,6 +40,9 @@ func (c *Client) request(method, path string, content io.Reader) ([]byte, error)
 	}
 
 	c.setDefaultHeaders(request)
+	for k, h := range headers {
+		request.Header.Set(k, h)
+	}
 	response, err := c.httpClient.Do(request)
 
 	if err != nil {
@@ -83,23 +86,27 @@ func (c *Client) setDefaultHeaders(request *http.Request) {
 }
 
 // Get ...
-func (c *Client) Get(path string) ([]byte, error) {
-	return c.request("GET", path, nil)
+func (c *Client) Get(path string, readOnlyDb bool) ([]byte, error) {
+	var h map[string]string
+	if !readOnlyDb {
+		h["Read-Only-DB"] = "false"
+	}
+	return c.request("GET", path, nil, h)
 }
 
 // Post ...
 func (c *Client) Post(path string, obj interface{}) ([]byte, error) {
 	payloadJSON, _ := json.Marshal(obj)
-	return c.request("POST", path, bytes.NewBuffer(payloadJSON))
+	return c.request("POST", path, bytes.NewBuffer(payloadJSON), nil)
 }
 
 // Put ...
 func (c *Client) Put(path string, obj interface{}) ([]byte, error) {
 	payloadJSON, _ := json.Marshal(obj)
-	return c.request("PUT", path, bytes.NewBuffer(payloadJSON))
+	return c.request("PUT", path, bytes.NewBuffer(payloadJSON), nil)
 }
 
 // Delete ...
 func (c *Client) Delete(path string) ([]byte, error) {
-	return c.request("DELETE", path, nil)
+	return c.request("DELETE", path, nil, nil)
 }
