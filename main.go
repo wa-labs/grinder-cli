@@ -89,6 +89,7 @@ func (c *Client) setDefaultHeaders(request *http.Request) {
 func (c *Client) Get(path string, readOnlyDb bool) ([]byte, error) {
 	var h map[string]string
 	if !readOnlyDb {
+		h = make(map[string]string)
 		h["Read-Only-DB"] = "false"
 	}
 	return c.request("GET", path, nil, h)
